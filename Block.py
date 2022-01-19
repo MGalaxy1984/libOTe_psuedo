@@ -106,6 +106,9 @@ class Block:
                 to_return.data[i] = self.data[i] & tmp[i]
         return to_return
 
+    def reverse(self):
+        self.data.reverse()
+
     def gf_128_mul(self, y, xy1, xy2):
         assert isinstance(y, Block)
         assert isinstance(xy1, Block)
