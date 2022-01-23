@@ -109,17 +109,17 @@ class Block:
     def reverse(self):
         self.data.reverse()
 
-    def gf_128_mul(self, y, xy1, xy2):
+    def gf_128_mul(self, y, xy1=None, xy2=None):
         assert isinstance(y, Block)
-        assert isinstance(xy1, Block)
-        assert isinstance(xy2, Block)
+        if xy1 is None:
+            xy1 = Block()
+        else:
+            assert isinstance(xy1, Block)
+        if xy2 is None:
+            xy2 = Block()
+        else:
+            assert isinstance(xy2, Block)
         x = self
-
-    def gf_128_mul_1(self, y):
-        assert isinstance(y, Block)
-        xy1 = Block()
-        xy2 = Block()
-        self.gf_128_mul(y, xy1, xy2)
-
+        
     def gf_128_reduce(self, y):
         assert isinstance(y, Block)

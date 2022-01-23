@@ -47,5 +47,6 @@ class PseudoAES:
         return plaintext_array
 
 
-fixed_key = 0x0000000002B3EA38FFFFFFFFF9D71ABA
+# fixed_key = 0x0000000002B3EA38FFFFFFFFF9D71ABA
+fixed_key = 0x0
 fixed_aes = PseudoAES(fixed_key)
