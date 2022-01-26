@@ -14,14 +14,19 @@ class PseudoAES:
 
     def __init__(self, p_key_input):
         if isinstance(p_key_input, numpy.int):
-            self.p_key = p_key_input.to_bytes(16, byteorder=Define.byteorder)
+            self.p_key = bytearray(p_key_input.to_bytes(16, byteorder=Define.byteorder))
         elif isinstance(p_key_input, bytes):
-            self.p_key = copy.copy(p_key_input)
+            self.p_key = bytearray(p_key_input)
+        elif isinstance(p_key_input, bytearray):
+            self.p_key = bytearray(p_key_input)
+        # self.p_key.reverse()
         self.aes_module = AES.new(key=self.p_key, mode=AES.MODE_ECB)
 
     def encrypt_1_block(self, plaintext):
         assert isinstance(plaintext, Block)
-        ciphertext_bytes = self.aes_module.encrypt(plaintext.data)
+        tmp_plaintext = bytearray(plaintext.data)
+        # tmp_plaintext.reverse()
+        ciphertext_bytes = self.aes_module.encrypt(tmp_plaintext)
         return Block(ciphertext_bytes)
 
     def encrypt_8_blocks(self, plaintext_array):
@@ -47,6 +52,6 @@ class PseudoAES:
         return plaintext_array
 
 
-# fixed_key = 0x0000000002B3EA38FFFFFFFFF9D71ABA
-fixed_key = 0x0
+fixed_key = 0x0000000002B3EA38FFFFFFFFF9D71ABA
+# fixed_key = 0x0
 fixed_aes = PseudoAES(fixed_key)
