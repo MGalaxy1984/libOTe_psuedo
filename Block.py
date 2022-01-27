@@ -120,6 +120,34 @@ class Block:
         else:
             assert isinstance(xy2, Block)
         x = self
+
+        mod = 0b10000111
+        shifted = [int.from_bytes(x.data[8:16], Define.byteorder), int.from_bytes(x.data[0:8], Define.byteorder)]
+        result0 = [int.from_bytes(xy1.data[8:16], Define.byteorder), int.from_bytes(xy1.data[0:8], Define.byteorder)]
+        result1 = [int.from_bytes(xy2.data[8:16], Define.byteorder), int.from_bytes(xy2.data[0:8], Define.byteorder)]
+        yy = [int.from_bytes(y.data[8:16], Define.byteorder), int.from_bytes(y.data[0:8], Define.byteorder)]
+        print(f'yy[0] = {hex(yy[0])}')
+        print(f'yy[1] = {hex(yy[1])}')
+        for i in range(2):
+            for j in range(64):
+                if yy[i] & (1 << j):
+                    result0[0] ^= shifted[0]
+                    result0[1] ^= shifted[1]
+
+                if shifted[1] & (1 << 63):
+                    shifted[1] = (shifted[1] << 1) | (shifted[0] >> 63)
+                    shifted[1] &= Define.max_int_64
+                    shifted[0] = (shifted[0] << 1) ^ mod
+                    shifted[0] &= Define.max_int_64
+                else:
+                    shifted[1] = (shifted[1] << 1) | (shifted[0] >> 63)
+                    shifted[1] &= Define.max_int_64
+                    shifted[0] = shifted[0] << 1
+                    shifted[0] &= Define.max_int_64
+        print(f'result[0] = {hex(result0[0])}')
+        print(f'result[1] = {hex(result0[1])}')
+        xy1.set((result0[1] << 64) + result0[0])
+        xy2.set((result1[1] << 64) + result1[0])
         
     def gf_128_reduce(self, y):
         assert isinstance(y, Block)
