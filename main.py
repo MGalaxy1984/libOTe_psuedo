@@ -6,4 +6,3 @@ from PseudoAES import PseudoAES
 
 if __name__ == '__main__':
     SenderFerretMalCheck.test()
-

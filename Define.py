@@ -18,7 +18,7 @@ def set_bit(value, bit_index, bit):
     if bit == 1:
         return value | (1 << bit_index)
     else:
-        return value & (0 << bit_index)
+        return value & ~(1 << bit_index)
 
 
 def get_bit(value, bit_index):
@@ -61,8 +61,8 @@ def mm_clmulepi64_si128(a, b, imm8):
     assert isinstance(b, Block)
     assert isinstance(imm8, int)
     dst = 0
-    temp1 = 0
-    temp2 = 0
+    # temp1 = 0
+    # temp2 = 0
     a_int_list = a.to_int_list()
     b_int_list = b.to_int_list()
     if (imm8 % 2) == 0:
@@ -76,20 +76,21 @@ def mm_clmulepi64_si128(a, b, imm8):
 
     temp = 0
     for i in range(64):
-        temp = set_bit(temp, i, 0)
+        temp = set_bit(temp, i, (get_bit(temp1, 0) & get_bit(temp2, i)))
         for j in range(1, i + 1):
             tmp_bit = get_bit(temp, i) ^ (get_bit(temp1, j) & get_bit(temp2, i - j))
             temp = set_bit(temp, i, tmp_bit)
         dst = set_bit(dst, i, get_bit(temp, i))
+    # print(f'temp = {temp}')
     for i in range(64, 128):
-        temp = set_bit(temp, i, (get_bit(temp1, 0) & get_bit(temp2, i)))
+        temp = set_bit(temp, i, 0);
         for j in range(i - 63, 64):
             tmp_bit = get_bit(temp, i) ^ (get_bit(temp1, j) & get_bit(temp2, i - j))
             temp = set_bit(temp, i, tmp_bit)
         dst = set_bit(dst, i, get_bit(temp, i))
     dst = set_bit(dst, 127, 0)
 
-    print(f'dst = {hex(dst)}')
+    # print(f'dst = {hex(dst)}')
 
     # if (imm8 % 2) == 0:
     #     tmp = (a_int_list[1] << 64 + temp1) & max_int_128

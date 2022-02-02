@@ -117,47 +117,47 @@ class Block:
     def to_int_list(self):
         return [int.from_bytes(self.data[8:16], Define.byteorder), int.from_bytes(self.data[0:8], Define.byteorder)]
 
-    def gf_128_mul(self, y, xy1=None, xy2=None):
-        assert isinstance(y, Block)
-        if xy1 is None:
-            xy1 = Block()
-        else:
-            assert isinstance(xy1, Block)
-        if xy2 is None:
-            xy2 = Block()
-        else:
-            assert isinstance(xy2, Block)
-        x = self
+    # def gf_128_mul(self, y, xy1=None, xy2=None):
+    #     assert isinstance(y, Block)
+    #     if xy1 is None:
+    #         xy1 = Block()
+    #     else:
+    #         assert isinstance(xy1, Block)
+    #     if xy2 is None:
+    #         xy2 = Block()
+    #     else:
+    #         assert isinstance(xy2, Block)
+    #     x = self
+    #
+    #     mod = 0b10000111
+    #     shifted = x.to_int_list()
+    #     result0 = xy1.to_int_list()
+    #     result1 = xy2.to_int_list()
+    #     yy = y.to_int_list()
+    #     print(f'yy[0] = {hex(yy[0])}')
+    #     print(f'yy[1] = {hex(yy[1])}')
+    #     for i in range(2):
+    #         for j in range(64):
+    #             if yy[i] & (1 << j):
+    #                 result0[0] ^= shifted[0]
+    #                 result0[1] ^= shifted[1]
+    #
+    #             if shifted[1] & (1 << 63):
+    #                 shifted[1] = (shifted[1] << 1) | (shifted[0] >> 63)
+    #                 shifted[1] &= Define.max_int_64
+    #                 shifted[0] = (shifted[0] << 1) ^ mod
+    #                 shifted[0] &= Define.max_int_64
+    #             else:
+    #                 shifted[1] = (shifted[1] << 1) | (shifted[0] >> 63)
+    #                 shifted[1] &= Define.max_int_64
+    #                 shifted[0] = shifted[0] << 1
+    #                 shifted[0] &= Define.max_int_64
+    #     print(f'result[0] = {hex(result0[0])}')
+    #     print(f'result[1] = {hex(result0[1])}')
+    #     xy1.set((result0[1] << 64) + result0[0])
+    #     xy2.set((result1[1] << 64) + result1[0])
 
-        mod = 0b10000111
-        shifted = x.to_int_list()
-        result0 = xy1.to_int_list()
-        result1 = xy2.to_int_list()
-        yy = y.to_int_list()
-        print(f'yy[0] = {hex(yy[0])}')
-        print(f'yy[1] = {hex(yy[1])}')
-        for i in range(2):
-            for j in range(64):
-                if yy[i] & (1 << j):
-                    result0[0] ^= shifted[0]
-                    result0[1] ^= shifted[1]
-
-                if shifted[1] & (1 << 63):
-                    shifted[1] = (shifted[1] << 1) | (shifted[0] >> 63)
-                    shifted[1] &= Define.max_int_64
-                    shifted[0] = (shifted[0] << 1) ^ mod
-                    shifted[0] &= Define.max_int_64
-                else:
-                    shifted[1] = (shifted[1] << 1) | (shifted[0] >> 63)
-                    shifted[1] &= Define.max_int_64
-                    shifted[0] = shifted[0] << 1
-                    shifted[0] &= Define.max_int_64
-        print(f'result[0] = {hex(result0[0])}')
-        print(f'result[1] = {hex(result0[1])}')
-        xy1.set((result0[1] << 64) + result0[0])
-        xy2.set((result1[1] << 64) + result1[0])
-
-    def gf_128_mul_1(self, y, xy1, xy2):
+    def gf_128_mul(self, y, xy1, xy2):
         assert isinstance(y, Block)
         assert isinstance(xy1, Block)
         assert isinstance(xy2, Block)
@@ -174,14 +174,28 @@ class Block:
         t1 = (t1 ^ t3)
         t4 = (t4 ^ t2)
 
-        print(f't1 = {t1}')
-        print(f't4 = {t4}')
+        # print(f't1 = {t1}')
+        # print(f't4 = {t4}')
         xy1.set(t1)
         xy2.set(t4)
         # print(f'result[0] = {hex(result0[0])}')
         # print(f'result[1] = {hex(result0[1])}')
         # xy1.set((result0[1] << 64) + result0[0])
         # xy2.set((result1[1] << 64) + result1[0])
+        return xy1.gf_128_reduce(xy2)
         
     def gf_128_reduce(self, y):
         assert isinstance(y, Block)
+        mul256_low = self
+        mul256_high = y
+        mod = 0b10000111
+        modulus = Block(mod)
+        tmp = Define.mm_clmulepi64_si128(mul256_high, modulus, 0x01)
+        mul256_low = mul256_low ^ Define.mm_slli_si128(tmp, 8)
+        mul256_high = mul256_high ^ Define.mm_srli_si128(tmp, 8)
+
+        tmp = Define.mm_clmulepi64_si128(mul256_high, modulus, 0x00)
+        mul256_low = mul256_low ^ tmp
+
+        return mul256_low
+

@@ -1,32 +1,47 @@
 from Block import Block
 
 sum0 = Block(0)
-sum1 = Block(1)
+sum1 = Block(0)
+
+X = Block(0)
 
 
-def component(m, x):
+def pre_component():
+    global X
+    X = Block(0x924b386ad40e07a50f94cb208ccf82a5)
+
+
+def component(m, xx):
     """
 
     :param m: vector mB
-    :param x: a block received from receiver side
+    :param xx: a block received from receiver side
     :return:
     """
     global sum0, sum1
     assert isinstance(m, list)
-    assert isinstance(x, Block)
+    assert isinstance(xx, Block)
+    low = Block(0xe8f5639ab50affe9234f3c9ef8ca0391)
+    high = Block(0x0da7a5d09839a464fecd0ca06df279e4)
     for i in range(len(m)):
-        low = Block(0x2e1f7bead0091ffea831e7d7a0a45f2e)
-        high = Block(0x4cad407b310aac870d1d3eaafc588908)
-        x.gf_128_mul_1(m[i], low, high)
+        print(f'xx = {xx}')
         print(f'm[i] = {m[i]}')
         print(f'low = {low}')
         print(f'high = {high}')
+        xx.gf_128_mul(m[i], low, high)
+        print(f'low1 = {low}')
+        print(f'high1 = {high}')
         sum0 = sum0 ^ low
         sum1 = sum1 ^ high
-        # x = x.gf_128_mul_1(x)
+        print(f'xx1 = {xx}')
+        print(f'X = {X}')
+        xx = xx.gf_128_mul(X, Block(), Block())
+        print(f'xx2 = {xx}')
 
 
 def test():
-    m = [Block(0xca70abbe9b5b27d2181c226f0b025b09)]
-    xx = Block(0x850e65a5333282444f185a3b38d5944a)
+    pre_component()
+
+    m = [Block(0xf54c69324966dd79558149f508e228b5), Block(0xe861fa3f9ac373619ba0113f8c739fe0)]
+    xx = Block(0xb942a4af19fcf2f7ce56aa8f52595323)
     component(m, xx)
