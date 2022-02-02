@@ -17,7 +17,7 @@ def component(m, x):
     for i in range(len(m)):
         low = Block(0x2e1f7bead0091ffea831e7d7a0a45f2e)
         high = Block(0x4cad407b310aac870d1d3eaafc588908)
-        x.gf_128_mul(m[i], low, high)
+        x.gf_128_mul_1(m[i], low, high)
         print(f'm[i] = {m[i]}')
         print(f'low = {low}')
         print(f'high = {high}')

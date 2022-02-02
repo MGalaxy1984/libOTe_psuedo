@@ -40,6 +40,8 @@ class Block:
         elif isinstance(init, bytearray):
             assert len(init) == 16
             self.data = bytearray(init)
+        elif isinstance(init, Block):
+            self.data = init.data.copy()
         else:
             raise TypeError('Input not recognized')
 
@@ -109,6 +111,12 @@ class Block:
     def reverse(self):
         self.data.reverse()
 
+    def to_int(self):
+        return int.from_bytes(self.data, Define.byteorder)
+
+    def to_int_list(self):
+        return [int.from_bytes(self.data[8:16], Define.byteorder), int.from_bytes(self.data[0:8], Define.byteorder)]
+
     def gf_128_mul(self, y, xy1=None, xy2=None):
         assert isinstance(y, Block)
         if xy1 is None:
@@ -122,10 +130,10 @@ class Block:
         x = self
 
         mod = 0b10000111
-        shifted = [int.from_bytes(x.data[8:16], Define.byteorder), int.from_bytes(x.data[0:8], Define.byteorder)]
-        result0 = [int.from_bytes(xy1.data[8:16], Define.byteorder), int.from_bytes(xy1.data[0:8], Define.byteorder)]
-        result1 = [int.from_bytes(xy2.data[8:16], Define.byteorder), int.from_bytes(xy2.data[0:8], Define.byteorder)]
-        yy = [int.from_bytes(y.data[8:16], Define.byteorder), int.from_bytes(y.data[0:8], Define.byteorder)]
+        shifted = x.to_int_list()
+        result0 = xy1.to_int_list()
+        result1 = xy2.to_int_list()
+        yy = y.to_int_list()
         print(f'yy[0] = {hex(yy[0])}')
         print(f'yy[1] = {hex(yy[1])}')
         for i in range(2):
@@ -148,6 +156,32 @@ class Block:
         print(f'result[1] = {hex(result0[1])}')
         xy1.set((result0[1] << 64) + result0[0])
         xy2.set((result1[1] << 64) + result1[0])
+
+    def gf_128_mul_1(self, y, xy1, xy2):
+        assert isinstance(y, Block)
+        assert isinstance(xy1, Block)
+        assert isinstance(xy2, Block)
+        x = self
+
+        t1 = Define.mm_clmulepi64_si128(x, y, 0x00)
+        t2 = Define.mm_clmulepi64_si128(x, y, 0x10)
+        t3 = Define.mm_clmulepi64_si128(x, y, 0x01)
+        t4 = Define.mm_clmulepi64_si128(x, y, 0x11)
+
+        t2 = (t2 ^ t3)
+        t3 = Define.mm_slli_si128(t2, 8)
+        t2 = Define.mm_srli_si128(t2, 8)
+        t1 = (t1 ^ t3)
+        t4 = (t4 ^ t2)
+
+        print(f't1 = {t1}')
+        print(f't4 = {t4}')
+        xy1.set(t1)
+        xy2.set(t4)
+        # print(f'result[0] = {hex(result0[0])}')
+        # print(f'result[1] = {hex(result0[1])}')
+        # xy1.set((result0[1] << 64) + result0[0])
+        # xy2.set((result1[1] << 64) + result1[0])
         
     def gf_128_reduce(self, y):
         assert isinstance(y, Block)
