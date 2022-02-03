@@ -1,5 +1,3 @@
-import tkinter
-
 from Block import Block
 
 byteorder = 'big'
