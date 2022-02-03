@@ -13,7 +13,6 @@ def pre_component():
 
 def component(m, xx):
     """
-
     :param m: vector mB
     :param xx: a block received from receiver side
     :return:
@@ -37,6 +36,10 @@ def component(m, xx):
         print(f'X = {X}')
         xx = xx.gf_128_mul(X, Block(), Block())
         print(f'xx2 = {xx}')
+
+
+def after_component():
+    my_sum = sum0.gf_128_reduce(sum1)
 
 
 def test():
