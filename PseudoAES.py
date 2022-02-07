@@ -1,5 +1,4 @@
 import copy
-import numpy
 
 from Cryptodome.Cipher import AES
 
@@ -13,7 +12,7 @@ class PseudoAES:
     aes_module = None
 
     def __init__(self, p_key_input):
-        if isinstance(p_key_input, numpy.int):
+        if isinstance(p_key_input, int):
             self.p_key = bytearray(p_key_input.to_bytes(16, byteorder=Define.byteorder))
         elif isinstance(p_key_input, bytes):
             self.p_key = bytearray(p_key_input)

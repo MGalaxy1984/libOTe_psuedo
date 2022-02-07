@@ -20,31 +20,59 @@ def component(m, xx):
     global sum0, sum1
     assert isinstance(m, list)
     assert isinstance(xx, Block)
-    low = Block(0xe8f5639ab50affe9234f3c9ef8ca0391)
-    high = Block(0x0da7a5d09839a464fecd0ca06df279e4)
+    to = open("/home/mgalaxy/workspace/libOTe_component_files/sender_ferretMalCheck_component_middle.txt", "w")
     for i in range(len(m)):
-        print(f'xx = {xx}')
-        print(f'm[i] = {m[i]}')
-        print(f'low = {low}')
-        print(f'high = {high}')
+        low = Block(0)
+        high = Block(0)
+        # print(f'xx = {xx}')
+        # print(f'm[i] = {m[i]}')
+        # print(f'low = {low}')
+        # print(f'high = {high}')
+        to.write(f'xx = {xx}\n')
+        to.write(f'm[i] = {m[i]}\n')
+        to.write(f'low = {low}\n')
+        to.write(f'high = {high}\n')
         xx.gf_128_mul(m[i], low, high)
-        print(f'low1 = {low}')
-        print(f'high1 = {high}')
+        # print(f'low1 = {low}')
+        # print(f'high1 = {high}')
+        to.write(f'low1 = {low}\n')
+        to.write(f'high1 = {high}\n')
         sum0 = sum0 ^ low
         sum1 = sum1 ^ high
-        print(f'xx1 = {xx}')
-        print(f'X = {X}')
+        # print(f'xx1 = {xx}')
+        # print(f'X = {X}')
+        to.write(f'xx1 = {xx}\n')
+        to.write(f'X = {X}\n')
         xx = xx.gf_128_mul(X, Block(), Block())
-        print(f'xx2 = {xx}')
+        # print(f'xx2 = {xx}')
+        to.write(f'xx2 = {xx}\n')
+    to.close()
 
 
 def after_component():
     my_sum = sum0.gf_128_reduce(sum1)
+    print(f"my_sum = {my_sum}")
 
 
 def test():
-    pre_component()
+    fi = open("/home/mgalaxy/workspace/libOTe_component_files/sender_ferretMalCheck_input.txt")
+    xx = Block(int("0x" + fi.readline().rstrip(), 16))
+    global X
+    X = Block(xx)
+    n = 0
+    m = []
+    while True:
+        line = fi.readline()
+        if not line:
+            break
+        m.append(Block(int("0x" + line.rstrip(), 16)))
+        n += 1
 
-    m = [Block(0xf54c69324966dd79558149f508e228b5), Block(0xe861fa3f9ac373619ba0113f8c739fe0)]
-    xx = Block(0xb942a4af19fcf2f7ce56aa8f52595323)
+    print(f"n = {n}")
+
     component(m, xx)
+
+    print(f"sum0 = {sum0}")
+    print(f"sum1 = {sum1}")
+
+    after_component()
