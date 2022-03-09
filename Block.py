@@ -108,6 +108,13 @@ class Block:
                 to_return.data[i] = self.data[i] & tmp[i]
         return to_return
 
+    def __eq__(self, other):
+        assert len(other.data) == 16
+        for i in range(16):
+            if self.data[i] != other.data[i]:
+                return False
+        return True
+
     def reverse(self):
         self.data.reverse()
 
