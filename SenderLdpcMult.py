@@ -148,8 +148,23 @@ def l_component(ppp: list[Block], mm: list[Block]):
 
 
 def component(m: list[Block]):
-    r_component(m[r_cols - rows: r_cols])
-    l_component(m[0: r_cols - rows], m[r_cols - rows: r_cols])
+    ppp = m[0: r_cols - rows]
+    mm = m[r_cols - rows: r_cols]
+    r_component(mm)
+    fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_encoder_middle.txt")
+    m_middle = []
+    for i in range(r_cols):
+        line = fi.readline()
+        m_middle.append(Block(int("0x" + line.rstrip(), 16)))
+    m_comp_middle = ppp + mm
+    middle_result = True
+    for i in range(r_cols):
+        if m_comp_middle[i] != m_middle[i]:
+            middle_result = False
+            print(f'after right encoder, index {i} is different')
+    print(f'middle_result = {middle_result}')
+    l_component(ppp, mm)
+    return ppp + mm
 
 
 def test():
@@ -182,13 +197,14 @@ def test():
         m_after.append(Block(int("0x" + line.rstrip(), 16)))
     fi.close()
 
-    component(m)
+    m = component(m)
 
     result = True
     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_encoder_component_output.txt", "w")
     for i in range(r_cols):
         if m[i] != m_after[i]:
             result = False
+            print(f'index {i} is different')
         fi.write(f'{m[i]} {m_after[i]}\n')
     print(result)
 
