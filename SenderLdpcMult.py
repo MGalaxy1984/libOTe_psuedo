@@ -25,13 +25,14 @@ diagMtx_g16_w5_seed1_t36 = [
 rows = 0
 r_cols = 0
 l_cols = 0
+k = 0
 v = []
 
 offset0 = 0
 offset1 = 0
 
 
-def r_component(x: list[Block]):
+def r_component(m: list[Block]):
     global offset0, offset1, main_end, rows
     xi = rows - 1
     xx = xi - 16
@@ -62,15 +63,14 @@ def r_component(x: list[Block]):
             # print(f'offset0 = {offset0}')
             # print(f'offset1 = {offset1}')
 
-            x[xx + col0] ^= x[xi]
-            x[xx + col1] ^= x[xi]
-            x[xx + col2] ^= x[xi]
-            x[xx + col3] ^= x[xi]
+            m[rows + xx + col0] ^= m[rows + xi]
+            m[rows + xx + col1] ^= m[rows + xi]
+            m[rows + xx + col2] ^= m[rows + xi]
+            m[rows + xx + col3] ^= m[rows + xi]
 
-            if offset0 >= 0:
-                x[offset0] ^= x[xi]
-            if offset1 >= 0:
-                x[offset1] ^= x[xi]
+            m[rows + offset0] ^= m[rows + xi]
+
+            m[rows + offset1] ^= m[rows + xi]
 
             # print(f'i = {xi}')
             # print(f'x[513] = {x[513]}')
@@ -93,17 +93,17 @@ def r_component(x: list[Block]):
             col = diagMtx_g16_w5_seed1_t36[xi & 15][j] + xi - 16
             if col >= 0:
                 # print(f'col = {col}')
-                x[col] ^= x[xi]
+                m[rows + col] ^= m[rows + xi]
         if offset0 >= 0:
-            x[offset0] ^= x[xi]
+            m[rows + offset0] ^= m[rows + xi]
             offset0 -= 1
         if offset1 >= 0:
-            x[offset1] ^= x[xi]
+            m[rows + offset1] ^= m[rows + xi]
             offset1 -= 1
         xi -= 1
 
 
-def l_component(ppp: list[Block], mm: list[Block]):
+def l_component(m: list[Block]):
     global l_cols, rows, v
     i = 0
     # print(f'cols = {cols}')
@@ -138,7 +138,7 @@ def l_component(ppp: list[Block], mm: list[Block]):
             # print(f'm2 = {m2}')
             # print(f'm3 = {m3}')
             # print(f'm4 = {m4}')
-            ppp[tmp_i] = ppp[tmp_i] ^ mm[m0] ^ mm[m1] ^ mm[m2] ^ mm[m3] ^ mm[m4]
+            m[tmp_i] = m[tmp_i] ^ m[rows + m0] ^ m[rows + m1] ^ m[rows + m2] ^ m[rows + m3] ^ m[rows + m4]
             m0 += 1
             m1 += 1
             m2 += 1
@@ -150,35 +150,34 @@ def l_component(ppp: list[Block], mm: list[Block]):
 def component(m: list[Block]):
     ppp = m[0: r_cols - rows]
     mm = m[r_cols - rows: r_cols]
-    r_component(mm)
+    r_component(m)
     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_encoder_middle.txt")
     m_middle = []
     for i in range(r_cols):
         line = fi.readline()
         m_middle.append(Block(int("0x" + line.rstrip(), 16)))
-    m_comp_middle = ppp + mm
     middle_result = True
     for i in range(r_cols):
-        if m_comp_middle[i] != m_middle[i]:
+        if m[i] != m_middle[i]:
             middle_result = False
             print(f'after right encoder, index {i} is different')
     print(f'middle_result = {middle_result}')
-    l_component(ppp, mm)
-    return ppp + mm
+    l_component(m)
 
 
 def test():
-    global rows, r_cols, l_cols, v, offset0, offset1
+    global rows, r_cols, l_cols, v, offset0, offset1, k
     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_encoder_input.txt")
     r_cols = int(fi.readline().rstrip(), 10)
-    print(r_cols)
+    # print(r_cols)
     rows = int(fi.readline().rstrip(), 10)
-    print(rows)
+    # print(rows)
     m = []
     for i in range(r_cols):
         line = fi.readline()
         m.append(Block(int("0x" + line.rstrip(), 16)))
     fi.close()
+    k = r_cols - rows
     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_encoder_r_input.txt")
     offset0 = int(fi.readline().rstrip(), 10)
     offset1 = int(fi.readline().rstrip(), 10)
@@ -197,91 +196,91 @@ def test():
         m_after.append(Block(int("0x" + line.rstrip(), 16)))
     fi.close()
 
-    m = component(m)
+    component(m)
 
     result = True
     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_encoder_component_output.txt", "w")
     for i in range(r_cols):
         if m[i] != m_after[i]:
             result = False
-            print(f'index {i} is different')
+            # print(f'index {i} is different')
         fi.write(f'{m[i]} {m_after[i]}\n')
     print(result)
 
 
-def l_test():
-    global rows, r_cols, v
-    fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mlencoder_input.txt")
-    v_size = int(fi.readline().rstrip(), 10)
-    for i in range(v_size):
-        v.append(int(fi.readline().rstrip(), 10))
-    ppp = []
-    mm = []
-    rows = int(fi.readline().rstrip(), 10)
-    r_cols = int(fi.readline().rstrip(), 10)
-    for i in range(rows):
-        line = fi.readline()
-        ppp.append(Block(int("0x" + line.rstrip(), 16)))
-    for i in range(r_cols):
-        line = fi.readline()
-        mm.append(Block(int("0x" + line.rstrip(), 16)))
-
-    l_component(ppp, mm)
-
-    ppp_after = []
-    mm_after = []
-    fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mlencoder_output.txt")
-    for i in range(rows):
-        line = fi.readline()
-        ppp_after.append(Block(int("0x" + line.rstrip(), 16)))
-    for i in range(r_cols):
-        line = fi.readline()
-        mm_after.append(Block(int("0x" + line.rstrip(), 16)))
-    fi.close()
-
-    to = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mlencoder_component_output.txt", "w")
-    result = True
-    for i in range(rows):
-        to.write(f'{ppp[i]}\n')
-        if ppp[i] != ppp_after[i]:
-            result = False
-    for i in range(r_cols):
-        to.write(f'{mm[i]}\n')
-        if mm[i] != mm_after[i]:
-            result = False
-    to.close()
-    print(result)
-
-
-def r_test():
-    global rows, offset0, offset1
-    fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mrencoder_input.txt")
-    rows = int(fi.readline().rstrip(), 10)
-    # print(m_rows)
-    offset0 = int(fi.readline().rstrip(), 10)
-    # print(offset0)
-    offset1 = int(fi.readline().rstrip(), 10)
-    # print(offset1)
-    m = []
-    for i in range(rows):
-        line = fi.readline()
-        m.append(Block(int("0x" + line.rstrip(), 16)))
-        # print(m[i])
-    fi.close()
-    m_after = []
-    fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mrencoder_output.txt")
-    for i in range(rows):
-        line = fi.readline()
-        m_after.append(Block(int("0x" + line.rstrip(), 16)))
-    fi.close()
-    # print(m[518])
-    # print(m[519])
-    r_component(m)
-    to = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mrencoder_component_output.txt", "w")
-    result = True
-    for i in range(rows):
-        to.write(f'{m[i]} {m_after[i]}\n')
-        if m[i] != m_after[i]:
-            result = False
-    to.close()
-    print(result)
+# def l_test():
+#     global rows, r_cols, v
+#     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mlencoder_input.txt")
+#     v_size = int(fi.readline().rstrip(), 10)
+#     for i in range(v_size):
+#         v.append(int(fi.readline().rstrip(), 10))
+#     ppp = []
+#     mm = []
+#     rows = int(fi.readline().rstrip(), 10)
+#     r_cols = int(fi.readline().rstrip(), 10)
+#     for i in range(rows):
+#         line = fi.readline()
+#         ppp.append(Block(int("0x" + line.rstrip(), 16)))
+#     for i in range(r_cols):
+#         line = fi.readline()
+#         mm.append(Block(int("0x" + line.rstrip(), 16)))
+#
+#     l_component(ppp, mm)
+#
+#     ppp_after = []
+#     mm_after = []
+#     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mlencoder_output.txt")
+#     for i in range(rows):
+#         line = fi.readline()
+#         ppp_after.append(Block(int("0x" + line.rstrip(), 16)))
+#     for i in range(r_cols):
+#         line = fi.readline()
+#         mm_after.append(Block(int("0x" + line.rstrip(), 16)))
+#     fi.close()
+#
+#     to = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mlencoder_component_output.txt", "w")
+#     result = True
+#     for i in range(rows):
+#         to.write(f'{ppp[i]}\n')
+#         if ppp[i] != ppp_after[i]:
+#             result = False
+#     for i in range(r_cols):
+#         to.write(f'{mm[i]}\n')
+#         if mm[i] != mm_after[i]:
+#             result = False
+#     to.close()
+#     print(result)
+#
+#
+# def r_test():
+#     global rows, offset0, offset1
+#     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mrencoder_input.txt")
+#     rows = int(fi.readline().rstrip(), 10)
+#     # print(m_rows)
+#     offset0 = int(fi.readline().rstrip(), 10)
+#     # print(offset0)
+#     offset1 = int(fi.readline().rstrip(), 10)
+#     # print(offset1)
+#     m = []
+#     for i in range(rows):
+#         line = fi.readline()
+#         m.append(Block(int("0x" + line.rstrip(), 16)))
+#         # print(m[i])
+#     fi.close()
+#     m_after = []
+#     fi = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mrencoder_output.txt")
+#     for i in range(rows):
+#         line = fi.readline()
+#         m_after.append(Block(int("0x" + line.rstrip(), 16)))
+#     fi.close()
+#     # print(m[518])
+#     # print(m[519])
+#     r_component(m)
+#     to = open("E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_mrencoder_component_output.txt", "w")
+#     result = True
+#     for i in range(rows):
+#         to.write(f'{m[i]} {m_after[i]}\n')
+#         if m[i] != m_after[i]:
+#             result = False
+#     to.close()
+#     print(result)
