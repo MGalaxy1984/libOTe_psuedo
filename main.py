@@ -1,4 +1,5 @@
 import Define
+import SenderExpand
 import SenderFerretMalCheck
 import SenderLdpcMult
 from Block import Block
@@ -12,3 +13,4 @@ if __name__ == '__main__':
     SenderLdpcMult.test()
     # SenderLdpcMult.l_test()
     # SenderLdpcMult.r_test()
+    # SenderExpand.test()
