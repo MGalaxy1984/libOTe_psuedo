@@ -1,4 +1,5 @@
 import Define
+import PRNG2
 import SenderExpand
 import SenderFerretMalCheck
 import SenderLdpcMult
@@ -14,5 +15,6 @@ if __name__ == '__main__':
     # SenderLdpcMult.test()
     # SenderLdpcMult.l_test()
     # SenderLdpcMult.r_test()
-    SenderExpand.test()
+    # SenderExpand.test()
     # Test.aes_test_1()
+    PRNG2.test()

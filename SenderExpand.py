@@ -96,7 +96,7 @@ def c_component(root: list[Block]):
     nodes[0].set(root)
     for i in range(3):
         tmp = []
-        for j in range(8):
+        for j in range(4):
             tl, tr = nodes[j].run()
             tmp.append(tl)
             tmp.append(tr)
