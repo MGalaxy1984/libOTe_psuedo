@@ -1,4 +1,5 @@
 from Block import Block
+from PRNG2 import PRNG2
 from PseudoAES import PseudoAES
 
 aes = [PseudoAES(3242342), PseudoAES(8993849)]
@@ -111,6 +112,131 @@ def c_component(root: list[Block]):
     # print(b)
     # print(len(m_out))
     return m_out
+
+
+class DNode:
+    d_aes = [PseudoAES(3242342), PseudoAES(8993849)]
+    data_in = None
+
+    # left_out = None
+    # right_out = None
+
+    def __init__(self):
+        self.data_in = Block(0)
+
+    def run(self):
+        di = self.data_in
+        tmp_left = self.d_aes[0].encrypt_1_block(di)
+        tmp_left ^= di
+
+        tmp_right = self.d_aes[1].encrypt_1_block(di)
+        tmp_right ^= di
+
+        return tmp_left, tmp_right
+
+    def set(self, di: Block):
+        self.data_in = di
+
+
+def d_component(root: Block, d: int):
+    m_out = []
+    nodes = []
+    n = 2 ** d
+    for i in range(n):
+        tmp = DNode()
+        nodes.append(tmp)
+
+    nodes[0].set(root)
+    for i in range(d):
+        tmp = []
+        for j in range(n):
+            tl, tr = nodes[j].run()
+            tmp.append(tl)
+            tmp.append(tr)
+        for j in range(n // 2):
+            nodes[j * 2].set(tmp[j * 2])
+            nodes[j * 2 + 1].set(tmp[j * 2 + 1])
+
+    for i in range(n):
+        m_out.append(nodes[i].data_in)
+
+    # for b in m_out:
+    # print(b)
+    # print(len(m_out))
+    return m_out
+
+
+def e_component(seed: Block):
+    if seed is None:
+        seed = Block(0)
+    prng2 = PRNG2(seed)
+    memory = [Block(0)] * (15 * 8)
+    for i in range(8):
+        memory[i] = prng2.get()
+    e_calculation(memory)
+    for i in range(len(memory)):
+        print(f'i = {i} {memory[i]}')
+
+
+def e_calculation(memory: list[Block]):
+    e_aes = [PseudoAES(3242342), PseudoAES(8993849)]
+    i = 0
+    while i < 3:
+        j = 0
+        while j < 2 ** i:
+            read_addr = ((2 ** i) - 1 + j) * 8
+            left_addr = read_addr * 2 + 1 * 8
+            right_addr = read_addr * 2 + 2 * 8
+            k = 0
+            while k < 8:
+                b = memory[read_addr + k]
+                l = e_aes[0].encrypt_1_block(b) ^ b
+                memory[left_addr + k] = l
+                r = e_aes[1].encrypt_1_block(b) ^ b
+                memory[right_addr + k] = r
+                k += 1
+            j += 1
+        i += 1
+
+
+def e_test():
+    fi = open(f'E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_expand_input_root.txt')
+    root = []
+    for i in range(128):
+        line = fi.readline()
+        root.append(Block(int("0x" + line.rstrip(), 16)))
+    fi.close()
+
+    output = []
+    fi = open(f'E:\PycharmProjects\libOTe_psuedo\DataFiles\sender_expand_output.txt')
+    for i in range(1024):
+        line = fi.readline()
+        output.append(Block(int("0x" + line.rstrip(), 16)))
+
+    e = []
+    for g in range(0, 128, 8):
+        r = root[g:g + 8]
+        tmp_e = [Block(0)] * (15*8)
+        for i in range(8):
+            tmp_e[i] = r[i]
+        e_calculation(tmp_e)
+        e += tmp_e[56:]
+
+
+    match = True
+    for i in range(len(e)):
+        # print(f'i = {i} {b[i]} {c[i]}')
+        if e[i] != output[i]:
+            match = False
+            print(f'i = {i} {output[i]} {e[i]}')
+    print(match)
+
+
+def d_test():
+    root = Block(0)
+    m_out = d_component(root, 6)
+    for i in range(len(m_out)):
+        print(f'#{i}: {m_out[i]}')
 
 
 # for n = 1024

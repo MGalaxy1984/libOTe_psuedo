@@ -16,5 +16,7 @@ if __name__ == '__main__':
     # SenderLdpcMult.l_test()
     # SenderLdpcMult.r_test()
     # SenderExpand.test()
+    # SenderExpand.d_test()
+    SenderExpand.e_test()
     # Test.aes_test_1()
-    PRNG2.test()
+    # PRNG2.test()
