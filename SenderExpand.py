@@ -166,37 +166,43 @@ def d_component(root: Block, d: int):
     return m_out
 
 
-def e_component(seed: Block):
+def e_component(seed: Block, d: int):
+    n = 2 ** d
     if seed is None:
         seed = Block(0)
     prng2 = PRNG2(seed)
-    memory = [Block(0)] * (15 * 8)
+    memory = [Block(0)] * (n * 8)
     for i in range(8):
         memory[i] = prng2.get()
-    e_calculation(memory)
+    e_calculation(memory, d)
     for i in range(len(memory)):
         print(f'i = {i} {memory[i]}')
 
 
-def e_calculation(memory: list[Block]):
+def e_calculation(memory: list[Block], d: int):
+    n = 2 ** d
     e_aes = [PseudoAES(3242342), PseudoAES(8993849)]
     i = 0
-    while i < 3:
-        j = 0
-        while j < 2 ** i:
-            read_addr = ((2 ** i) - 1 + j) * 8
-            left_addr = read_addr * 2 + 1 * 8
-            right_addr = read_addr * 2 + 2 * 8
+    ij = 1
+    while i < d:
+        # j = 2 ** i - 1
+        # print(f'i = {i}, ij = {ij}')
+        j = ij - 1
+        while j >= 0:
+            read_addr = j * 8
+            left_addr = read_addr * 2
+            right_addr = read_addr * 2 + 8
             k = 0
             while k < 8:
                 b = memory[read_addr + k]
-                l = e_aes[0].encrypt_1_block(b) ^ b
-                memory[left_addr + k] = l
-                r = e_aes[1].encrypt_1_block(b) ^ b
-                memory[right_addr + k] = r
+                left = e_aes[0].encrypt_1_block(b) ^ b
+                memory[left_addr + k] = left
+                right = e_aes[1].encrypt_1_block(b) ^ b
+                memory[right_addr + k] = right
                 k += 1
-            j += 1
+            j -= 1
         i += 1
+        ij <<= 1
 
 
 def e_test():
@@ -216,12 +222,11 @@ def e_test():
     e = []
     for g in range(0, 128, 8):
         r = root[g:g + 8]
-        tmp_e = [Block(0)] * (15*8)
+        tmp_e = [Block(0)] * (8 * 8)
         for i in range(8):
             tmp_e[i] = r[i]
-        e_calculation(tmp_e)
-        e += tmp_e[56:]
-
+        e_calculation(tmp_e, 3)
+        e += tmp_e
 
     match = True
     for i in range(len(e)):
