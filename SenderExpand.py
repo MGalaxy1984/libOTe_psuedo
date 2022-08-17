@@ -1,3 +1,4 @@
+import SenderHash
 from Block import Block
 from PRNG2 import PRNG2
 from PseudoAES import PseudoAES
@@ -174,20 +175,28 @@ def e_component(seed: Block, d: int):
     memory = [Block(0)] * (n * 8)
     for i in range(8):
         memory[i] = prng2.get()
-    e_calculation(memory, d)
+        print(f'prng[{i}] = {memory[i]}')
+    ee_calculation(memory, d)
     for i in range(len(memory)):
-        print(f'i = {i} {memory[i]}')
+        print(f'expand[{i}] = {memory[i]}')
+    delta = Block(0x2e2b34ca59fa4c883b2c8aefd44be966)
+    msg = []
+    for i in range(n*8):
+        msg.append([Block(0), Block(0)])
+    SenderHash.a_component(r=memory, m=msg, delta=delta)
+    for i in range(len(msg)):
+        print(f'msg[{i}] = {msg[i][0]} {msg[i][1]}')
 
 
 def e_calculation(memory: list[Block], d: int):
     n = 2 ** d
     e_aes = [PseudoAES(3242342), PseudoAES(8993849)]
     i = 0
-    ij = 1
+    width = 1
     while i < d:
         # j = 2 ** i - 1
-        # print(f'i = {i}, ij = {ij}')
-        j = ij - 1
+        # print(f'i = {i}, width = {width}')
+        j = width - 1
         while j >= 0:
             read_addr = j * 8
             left_addr = read_addr * 2
@@ -202,7 +211,39 @@ def e_calculation(memory: list[Block], d: int):
                 k += 1
             j -= 1
         i += 1
-        ij <<= 1
+        width <<= 1
+
+
+def ee_calculation(memory: list[Block], d: int):
+    ee_aes = [PseudoAES(3242342), PseudoAES(8993849)]
+    i = 0
+    width = 1
+    while i < d:
+        # j = 2 ** i - 1
+        # print(f'i = {i}, width = {width}')
+        j = width - 1
+        while j >= 0:
+            read_addr = j * 8
+            left_addr = read_addr * 2
+            right_addr = read_addr * 2 + 8
+
+            b = memory[read_addr: read_addr + 8]
+            left = ee_aes[0].encrypt_8_blocks(b)
+            for k in range(8):
+                memory[left_addr + k] = left[k] ^ b[k]
+            right = ee_aes[1].encrypt_8_blocks(b)
+            for k in range(8):
+                memory[right_addr + k] = right[k] ^ b[k]
+
+            j -= 1
+        i += 1
+        width <<= 1
+
+
+def ee_test():
+    d = 3
+    seed = Block(0)
+    e_component(seed, d)
 
 
 def e_test():
@@ -225,7 +266,7 @@ def e_test():
         tmp_e = [Block(0)] * (8 * 8)
         for i in range(8):
             tmp_e[i] = r[i]
-        e_calculation(tmp_e, 3)
+        ee_calculation(tmp_e, 3)
         e += tmp_e
 
     match = True
@@ -239,7 +280,7 @@ def e_test():
 
 def d_test():
     root = Block(0)
-    m_out = d_component(root, 6)
+    m_out = d_component(root, 3)
     for i in range(len(m_out)):
         print(f'#{i}: {m_out[i]}')
 

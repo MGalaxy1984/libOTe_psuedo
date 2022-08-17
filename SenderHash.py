@@ -117,6 +117,81 @@ def component(r, m, delta):
 
         i += 1
 
+def a_component(r, m, delta):
+    n8 = (len(m) // 8) * 8
+
+    d = delta & mask
+
+    i = 0
+    while i < n8:
+        r[i + 0] = r[i + 0] & mask
+        r[i + 1] = r[i + 1] & mask
+        r[i + 2] = r[i + 2] & mask
+        r[i + 3] = r[i + 3] & mask
+        r[i + 4] = r[i + 4] & mask
+        r[i + 5] = r[i + 5] & mask
+        r[i + 6] = r[i + 6] & mask
+        r[i + 7] = r[i + 7] & mask
+
+        m[i + 0][0] = r[i + 0]
+        m[i + 1][0] = r[i + 1]
+        m[i + 2][0] = r[i + 2]
+        m[i + 3][0] = r[i + 3]
+        m[i + 4][0] = r[i + 4]
+        m[i + 5][0] = r[i + 5]
+        m[i + 6][0] = r[i + 6]
+        m[i + 7][0] = r[i + 7]
+
+        m[i + 0][1] = r[i + 0] ^ d
+        m[i + 1][1] = r[i + 1] ^ d
+        m[i + 2][1] = r[i + 2] ^ d
+        m[i + 3][1] = r[i + 3] ^ d
+        m[i + 4][1] = r[i + 4] ^ d
+        m[i + 5][1] = r[i + 5] ^ d
+        m[i + 6][1] = r[i + 6] ^ d
+        m[i + 7][1] = r[i + 7] ^ d
+
+        # for j in range(8):
+        #     print(f'm[{j}][0] = {m[i + j][0]} m[{j}][1] = {m[i + j][1]}')
+        # print()
+
+        tmp = []
+        for j in range(8):
+            tmp.append(m[i + j][0])
+        hash_buffer = fixed_aes.encrypt_8_blocks(tmp)
+
+        # for j in range(8):
+        #     print(f'tmp[{j}] = {tmp[j]} hashBuffer[{j}] = {hash_buffer[j]}')
+        # print()
+
+        # test_buffer = fixed_aes.decrypt_8_block(hash_buffer)
+        # for j in range(8):
+        #     print(f'test decrypted[{j}] = {test_buffer[j]}')
+
+        for j in range(8):
+            m[i + j][0] ^= hash_buffer[j]
+
+        # for j in range(8):
+        #     print(f'm[{j}][0] = {m[j][0]} m[{j}][1] = {m[j][1]}')
+        # print()
+
+        tmp = []
+        for j in range(8):
+            tmp.append(m[i + j][1])
+        hash_buffer = fixed_aes.encrypt_8_blocks(tmp)
+
+        # for j in range(8):
+        #     print(f'tmp[{j}] = {tmp[j]} hashBuffer[{j}] = {hash_buffer[j]}')
+        # print()
+
+        for j in range(8):
+            m[i + j][1] ^= hash_buffer[j]
+
+        # for j in range(8):
+        #     print(f'm[{j}][0] = {m[j][0]} m[{j}][1] = {m[j][1]}')
+        # print()
+
+        i += 8
 
 def test():
     fi = open("/home/mgalaxy/workspace/libOTe_component_files/sender_hash_input.txt")

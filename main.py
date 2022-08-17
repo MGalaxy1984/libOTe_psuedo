@@ -17,6 +17,9 @@ if __name__ == '__main__':
     # SenderLdpcMult.r_test()
     # SenderExpand.test()
     # SenderExpand.d_test()
-    SenderExpand.e_test()
+    # SenderExpand.e_test()
+    SenderExpand.ee_test()
     # Test.aes_test_1()
     # PRNG2.test()
+    # for i in range(8):
+    #     print(f'$display("PRNG result [{i}] = %h", ei_mB_ram[{i}]);')
